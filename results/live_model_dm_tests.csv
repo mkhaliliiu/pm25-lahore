@@ -1,0 +1,19 @@
+h,live_model,vs,DM_stat,p_value
+24,Live Ridge (weather + CAMS),Raw CAMS,-10.2266,0.0
+24,Live Ridge (weather + CAMS),Persistence,0.0295,0.9764
+24,Live Ridge (weather + CAMS),Ridge + CAMS,6.9747,0.0
+24,Live LightGBM (weather + CAMS),Raw CAMS,-10.9478,0.0
+24,Live LightGBM (weather + CAMS),Persistence,-1.4534,0.1462
+24,Live LightGBM (weather + CAMS),Ridge + CAMS,3.997,0.0001
+48,Live Ridge (weather + CAMS),Raw CAMS,-7.8655,0.0
+48,Live Ridge (weather + CAMS),Persistence,-2.9931,0.0028
+48,Live Ridge (weather + CAMS),Ridge + CAMS,4.563,0.0
+48,Live LightGBM (weather + CAMS),Raw CAMS,-8.0946,0.0
+48,Live LightGBM (weather + CAMS),Persistence,-3.1757,0.0015
+48,Live LightGBM (weather + CAMS),Ridge + CAMS,3.3054,0.001
+72,Live Ridge (weather + CAMS),Raw CAMS,-6.7775,0.0
+72,Live Ridge (weather + CAMS),Persistence,-3.5827,0.0003
+72,Live Ridge (weather + CAMS),Ridge + CAMS,4.2896,0.0
+72,Live LightGBM (weather + CAMS),Raw CAMS,-6.8417,0.0
+72,Live LightGBM (weather + CAMS),Persistence,-3.7126,0.0002
+72,Live LightGBM (weather + CAMS),Ridge + CAMS,2.3512,0.0187
