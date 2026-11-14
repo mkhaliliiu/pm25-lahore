@@ -1,6 +1,11 @@
-model,onsets_scored,detected_pct,detected_48h_or_more_pct,detected_72h_pct,median_lead_h_when_detected
-Persistence,16,56.25,56.25,43.75,72.0
-Raw CAMS,16,0.0,0.0,0.0,0.0
-LightGBM plain,16,56.25,37.5,31.25,72.0
-LightGBM class weights,16,50.0,37.5,37.5,72.0
-LightGBM SMOTE,16,62.5,50.0,43.75,72.0
+clean_hours_before_onset,model,onsets_scored,detected_pct,detected_48h_or_more_pct,detected_72h_pct,median_lead_h_when_detected
+24,Persistence,16,56.25,56.25,43.75,72.0
+24,Raw CAMS,16,0.0,0.0,0.0,0.0
+24,LightGBM plain,16,87.5,81.25,75.0,72.0
+24,LightGBM class weights,16,93.75,87.5,81.25,72.0
+24,LightGBM SMOTE,16,93.75,93.75,81.25,72.0
+72,Persistence,7,0.0,0.0,0.0,0.0
+72,Raw CAMS,7,0.0,0.0,0.0,0.0
+72,LightGBM plain,7,85.71,71.43,57.14,72.0
+72,LightGBM class weights,7,100.0,85.71,71.43,72.0
+72,LightGBM SMOTE,7,100.0,100.0,71.43,72.0
