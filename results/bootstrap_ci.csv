@@ -1,0 +1,16 @@
+h,vs,MAE_difference,ci95_low,ci95_high
+24,Persistence,-6.331,-9.784,-3.046
+24,Raw CAMS,-31.912,-35.949,-27.899
+24,LightGBM (no CAMS),-3.363,-5.467,-1.109
+24,LightGBM long history (no CAMS),1.528,-1.206,4.263
+24,LightGBM + CAMS,-0.277,-1.81,1.296
+48,Persistence,-10.07,-14.256,-5.837
+48,Raw CAMS,-27.209,-31.162,-23.406
+48,LightGBM (no CAMS),-4.619,-7.186,-1.956
+48,LightGBM long history (no CAMS),-0.132,-3.245,3.097
+48,LightGBM + CAMS,0.351,-1.195,1.987
+72,Persistence,-12.626,-17.335,-7.99
+72,Raw CAMS,-26.47,-30.192,-22.642
+72,LightGBM (no CAMS),-7.536,-10.318,-4.716
+72,LightGBM long history (no CAMS),-1.142,-4.514,2.098
+72,LightGBM + CAMS,-0.424,-2.107,1.363
