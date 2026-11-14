@@ -90,6 +90,24 @@ def best_threshold(y, prob, fn_cost=10):
     return float(grid[int(np.argmin(costs))])
 
 
+def blocked_oof(make_model, X, y, h, n_blocks=3):
+    """Out-of-fold probabilities on training rows from contiguous time blocks, with a purge gap
+    (horizon + 48 h of lags) around each block. Used to choose a cost-based threshold without
+    touching the test period. `make_model()` must return an object with fit / predict_proba."""
+    p = np.full(len(X), np.nan)
+    edges = np.linspace(0, len(X), n_blocks + 1).astype(int)
+    purge = pd.Timedelta(hours=h + 48)
+    for i in range(n_blocks):
+        lo, hi = X.index[edges[i]], X.index[edges[i + 1] - 1]
+        val = (X.index >= lo) & (X.index <= hi)
+        fit = (X.index < lo - purge) | (X.index > hi + purge)
+        if y[fit].nunique() < 2 or y[fit].sum() < 6:
+            p[val] = float(y[fit].mean())
+            continue
+        p[val] = make_model().fit(X[fit], y[fit]).predict_proba(X[val])[:, 1]
+    return p
+
+
 def classification_metrics(y, prob, threshold=None, fn_cost=10, pred=None):
     """`prob` is any score (probability or a PM2.5 value) used for PR-AUC / ROC-AUC.
     Labels come from `pred` if given (e.g. per-fold thresholds), else prob >= threshold."""

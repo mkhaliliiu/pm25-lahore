@@ -7,7 +7,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from xgboost import XGBRegressor
 
 SEED = 42
 
@@ -31,6 +30,7 @@ def lgbm_classifier(params=None, scale_pos_weight=1.0):
 
 
 def xgb_regressor():
+    from xgboost import XGBRegressor          # imported here so the dashboard does not need xgboost
     return XGBRegressor(n_estimators=600, learning_rate=0.03, max_depth=6, subsample=0.8,
                         colsample_bytree=0.8, tree_method="hist", random_state=SEED, n_jobs=-1)
 
@@ -43,3 +43,18 @@ def rf_regressor():
     return make_pipeline(SimpleImputer(strategy="median"),
                          RandomForestRegressor(n_estimators=200, max_depth=16, min_samples_leaf=5,
                                                max_features=0.5, n_jobs=-1, random_state=SEED))
+
+
+class SmoteLGBM:
+    """Median-impute, oversample the event class with SMOTE (training data only), then LightGBM.
+    The imputer medians and the LightGBM booster are what the dashboard/API reuse."""
+    def fit(self, X, y):
+        from imblearn.over_sampling import SMOTE
+        self.imp = SimpleImputer(strategy="median").fit(X)
+        Xs, ys = SMOTE(random_state=SEED, k_neighbors=min(5, int(y.sum()) - 1)).fit_resample(
+            self.imp.transform(X), y)
+        self.model = lgbm_classifier().fit(Xs, ys)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(self.imp.transform(X))

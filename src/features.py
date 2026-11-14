@@ -121,3 +121,25 @@ FEATURES_BASE = (
 
 def feature_list(h, with_cams):
     return FEATURES_BASE + ([f"cams_h{h}", f"cams_mean24_h{h}"] if with_cams else [])
+
+
+# ----------------------------------------------------------------------------- live model
+# The US Embassy feed ended in March 2025, so the live model cannot use measured PM2.5.
+# It uses only what Open-Meteo provides in real time: weather now, the CAMS value now,
+# and the CAMS forecast for the target hour (the CAMS-correction part of the full model).
+LIVE_BASE = [
+    "temperature_2m", "relative_humidity_2m", "dew_point_2m", "surface_pressure", "wind_speed_10m",
+    "wind_sin", "wind_cos", "boundary_layer_height", "log_ventilation", "precipitation", "rain_24h",
+    "hour_sin", "hour_cos", "month_sin", "month_cos", "dayofweek", "smog_season",
+    "cams_pm25", "cams_mean24_now",
+]
+
+
+def add_live_features(df):
+    out = df.copy()
+    out["cams_mean24_now"] = out["cams_pm25"].rolling(24, min_periods=18).mean()
+    return out
+
+
+def feature_list_live(h):
+    return LIVE_BASE + [f"cams_h{h}", f"cams_mean24_h{h}"]
