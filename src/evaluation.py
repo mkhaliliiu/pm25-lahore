@@ -84,7 +84,8 @@ def expected_cost(y, pred, fn_cost=10, fp_cost=1):
 
 
 def best_threshold(y, prob, fn_cost=10):
-    grid = np.linspace(0.02, 0.98, 49)
+    # Fine grid at the low end: with a 10:1 or 20:1 cost the best cut-off is often below 0.05
+    grid = np.unique(np.concatenate([np.linspace(0.001, 0.1, 100), np.linspace(0.1, 0.99, 90)]))
     costs = [expected_cost(y, (prob >= t).astype(int), fn_cost) for t in grid]
     return float(grid[int(np.argmin(costs))])
 
@@ -108,5 +109,5 @@ def classification_metrics(y, prob, threshold=None, fn_cost=10, pred=None):
         accuracy=accuracy_score(y, pred),
         TP=int(tp), FP=int(fp), FN=int(fn), TN=int(tn),
         cost=fn_cost * fn + fp,
-        false_alarms_per_30d=fp / (len(y) / 720),
+        false_alarm_hours_per_30d=fp / (len(y) / 720),
     )

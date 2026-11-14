@@ -180,7 +180,7 @@ for h, g in pred.groupby("h"):
     base = {m: np.mean(np.abs(g[m] - g["y"])) for m in ["Persistence", "Raw CAMS"]}
     for m in ALL:
         r = regression_metrics(g["y"], g[m])
-        per_fold = g.groupby("fold").apply(lambda f: np.mean(np.abs(f[m] - f["y"])))
+        per_fold = (g[m] - g["y"]).abs().groupby(g["fold"]).mean()
         r.update(h=h, model=m, MAE_fold_mean=per_fold.mean(), MAE_fold_std=per_fold.std(),
                  skill_vs_persistence=1 - r["MAE"] / base["Persistence"],
                  skill_vs_cams=1 - r["MAE"] / base["Raw CAMS"])

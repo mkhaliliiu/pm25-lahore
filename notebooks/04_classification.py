@@ -167,43 +167,47 @@ summary.round(4).to_csv(RESULTS / "classification_summary.csv", index=False)
 by_season.round(4).to_csv(RESULTS / "classification_by_season.csv", index=False)
 
 show = ["model", "recall", "precision", "F1", "PR_AUC", "PR_AUC_random", "ROC_AUC", "accuracy",
-        "false_alarms_per_30d", "FN", "FP", "cost", "threshold"]
+        "false_alarm_hours_per_30d", "FN", "FP", "cost", "threshold"]
 pd.set_option("display.width", 220)
 for (ev, h), s in summary[summary.cost_ratio == MAIN_COST].groupby(["event", "h"]):
     print(f"\n=== {ev}, h = {h}, cost ratio {MAIN_COST}:1 (n = {s.n.iloc[0]}, events = {s.positives.iloc[0]}) ===")
     print(s[show].round(3).to_string(index=False))
 
-print("\nCost-ratio sensitivity (Very Unhealthy): recall / false alarms per 30 days")
+print("\nCost-ratio sensitivity (Very Unhealthy): recall / false-alarm hours per 30 days")
 sens = summary[(summary.event == list(EVENTS)[0]) & summary.model.isin(VARIANTS)]
 print(sens.pivot_table(index=["h", "model"], columns="cost_ratio",
-                       values=["recall", "false_alarms_per_30d"]).round(2).to_string())
+                       values=["recall", "false_alarm_hours_per_30d"]).round(2).to_string())
 print("\nRecall by season (cost 10:1):")
 print(by_season.pivot_table(index=["event", "h", "model"], columns="season", values="recall").round(3).to_string())
 
 # %% [markdown]
 # ## 4. Lead time: how early is the onset of each smog episode flagged?
-# Onset = an hour whose observed 24-h mean is above 125.5 after at least 24 hours below it
-# (so short flickers around the threshold inside one episode are not counted as new episodes).
+# Onset = an hour whose observed 24-h mean is above 125.5 after at least Q hours below it.
+# Q = 24 counts every new episode; Q = 72 keeps only episodes that start after three clean days,
+# where today's air quality gives no hint (a persistence forecast cannot flag these by design).
 # Lead time = the longest horizon (24/48/72 h) whose forecast for that hour was "event".
 
 # %%
 ev0 = list(EVENTS)[0]
 obs = (df["mean24_obs"] > EVENT_THRESHOLD).astype(float).where(df["mean24_obs"].notna())
-quiet_before = obs.shift(1).rolling(24, min_periods=12).max() == 0
-onsets = obs.index[(obs == 1) & quiet_before]
-lead_rows = []
+hits = {}
 for m in MODELS[1:]:
-    hit = {}
     for h in HORIZONS:
         g = pred[(pred.event == ev0) & (pred.h == h)]
-        hit[h] = pd.Series(g[f"pred{MAIN_COST}|{m}"].to_numpy(), index=g.index + pd.Timedelta(hours=h))
-    covered = [t for t in onsets if all(t in hit[h].index for h in HORIZONS)]
-    leads = np.array([max([h for h in HORIZONS if hit[h][t] == 1], default=0) for t in covered])
-    lead_rows.append({"model": m, "onsets_scored": len(covered),
-                      "detected_pct": 100 * np.mean(leads > 0) if len(leads) else np.nan,
-                      "detected_48h_or_more_pct": 100 * np.mean(leads >= 48) if len(leads) else np.nan,
-                      "detected_72h_pct": 100 * np.mean(leads >= 72) if len(leads) else np.nan,
-                      "median_lead_h_when_detected": np.median(leads[leads > 0]) if (leads > 0).any() else 0})
+        hits[m, h] = pd.Series(g[f"pred{MAIN_COST}|{m}"].to_numpy(), index=g.index + pd.Timedelta(hours=h))
+
+lead_rows = []
+for quiet in (24, 72):
+    clean_before = obs.shift(1).rolling(quiet, min_periods=quiet // 2).max() == 0
+    onsets = obs.index[(obs == 1) & clean_before]
+    for m in MODELS[1:]:
+        covered = [t for t in onsets if all(t in hits[m, h].index for h in HORIZONS)]
+        leads = np.array([max([h for h in HORIZONS if hits[m, h][t] == 1], default=0) for t in covered])
+        lead_rows.append({"clean_hours_before_onset": quiet, "model": m, "onsets_scored": len(covered),
+                          "detected_pct": 100 * np.mean(leads > 0) if len(leads) else np.nan,
+                          "detected_48h_or_more_pct": 100 * np.mean(leads >= 48) if len(leads) else np.nan,
+                          "detected_72h_pct": 100 * np.mean(leads >= 72) if len(leads) else np.nan,
+                          "median_lead_h_when_detected": np.median(leads[leads > 0]) if (leads > 0).any() else 0})
 lead = pd.DataFrame(lead_rows)
 lead.round(2).to_csv(RESULTS / "lead_time.csv", index=False)
 print("\nLead time at episode onsets (cost 10:1):")
