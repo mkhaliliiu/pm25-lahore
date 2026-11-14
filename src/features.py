@@ -98,12 +98,14 @@ def add_targets(df):
     CAMS for the target hour (cams_h{h}) is the forecast CAMS issues for that hour."""
     out = df.copy()
     mean24_obs = out["pm25_obs"].rolling(24, min_periods=18).mean()
+    cams_mean24 = out["cams_pm25"].rolling(24, min_periods=18).mean()
     out["mean24_obs"] = mean24_obs
     for h in HORIZONS:
         out[f"y_pm25_h{h}"] = out["pm25_obs"].shift(-h)
         event = (mean24_obs.shift(-h) > EVENT_THRESHOLD).astype(float)
         out[f"y_event_h{h}"] = event.where(mean24_obs.shift(-h).notna())
         out[f"cams_h{h}"] = out["cams_pm25"].shift(-h)
+        out[f"cams_mean24_h{h}"] = cams_mean24.shift(-h)   # CAMS forecast of the target-day mean
     return out
 
 
@@ -118,4 +120,4 @@ FEATURES_BASE = (
 
 
 def feature_list(h, with_cams):
-    return FEATURES_BASE + ([f"cams_h{h}"] if with_cams else [])
+    return FEATURES_BASE + ([f"cams_h{h}", f"cams_mean24_h{h}"] if with_cams else [])
