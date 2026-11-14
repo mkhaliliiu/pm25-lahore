@@ -1,0 +1,30 @@
+{
+  "horizon": 48,
+  "trials": 25,
+  "inner_blocks": [
+    [
+      "2023-01-01 00:00:00",
+      "2023-03-01 00:00:00"
+    ],
+    [
+      "2023-03-01 00:00:00",
+      "2023-05-01 00:00:00"
+    ],
+    [
+      "2023-05-01 00:00:00",
+      "2023-07-30 00:00:00"
+    ]
+  ],
+  "default_inner_mae": 51.93,
+  "best_inner_mae": 45.04,
+  "best_params": {
+    "num_leaves": 24,
+    "learning_rate": 0.016713580032818965,
+    "n_estimators": 400,
+    "min_child_samples": 35,
+    "subsample": 0.6830750771517882,
+    "colsample_bytree": 0.7060846194633285,
+    "reg_lambda": 0.0717005146741174,
+    "log_target": true
+  }
+}
