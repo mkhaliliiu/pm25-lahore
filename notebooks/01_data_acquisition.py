@@ -27,18 +27,27 @@ SESSION = requests.Session()
 SESSION.headers["X-API-Key"] = get_secret("OPENAQ_API_KEY")
 
 
-def openaq_get(path, params):
-    """GET from OpenAQ with retry on rate limit. Never logs headers (they hold the key)."""
-    for attempt in range(5):
-        r = SESSION.get(f"{OPENAQ}{path}", params=params, timeout=120)
-        if r.status_code == 429:
-            time.sleep(30 * (attempt + 1))
+RETRY_CODES = {408, 429, 500, 502, 503, 504}
+
+
+def openaq_get(path, params, tries=6):
+    """GET from OpenAQ, retrying on rate limits and timeouts. Never logs headers (they hold the key)."""
+    for attempt in range(tries):
+        try:
+            r = SESSION.get(f"{OPENAQ}{path}", params=params, timeout=120)
+        except requests.exceptions.RequestException:
+            time.sleep(10 * (attempt + 1))
             continue
         if r.status_code == 401:
             raise RuntimeError("OpenAQ rejected the key (401). Check OPENAQ_API_KEY.")
+        if r.status_code in RETRY_CODES:
+            wait = 30 if r.status_code == 429 else 10 * (attempt + 1)
+            print(f"  OpenAQ {r.status_code}, retrying in {wait}s ...")
+            time.sleep(wait)
+            continue
         r.raise_for_status()
         return r.json()
-    raise RuntimeError(f"OpenAQ kept rate-limiting {path}")
+    raise RuntimeError(f"OpenAQ failed {tries} times on {path}")
 
 
 # %% [markdown]
@@ -74,32 +83,45 @@ sensors.to_csv(DATA_RAW / "openaq_lahore_sensors.csv", index=False)
 print(sensors.to_string())
 
 # %% [markdown]
-# ## 2. Download hourly PM2.5 for one station
-# Default: the longest record. To pick another, change ROW to its row number above.
+# ## 2. Download hourly PM2.5 for the US Diplomatic Post (reference-grade monitor)
+# Downloaded one month at a time: small requests do not time out, and each month is
+# saved to data/raw/openaq_chunks/, so if the run stops, re-running skips finished months.
 
 # %%
-ROW = 0
+ROW = int(sensors.index[sensors["location"].str.contains("US Diplomatic Post", na=False)][0]) \
+    if sensors["location"].str.contains("US Diplomatic Post", na=False).any() else 0
 SENSOR_ID = int(sensors.loc[ROW, "sensor_id"])
-start = max(sensors.loc[ROW, "first"], pd.Timestamp(CAMS_START, tz="UTC") - pd.Timedelta(days=400))
-end = sensors.loc[ROW, "last"]
+start = sensors.loc[ROW, "first"].floor("D")
+end = sensors.loc[ROW, "last"].ceil("D")
 print(f"Sensor {SENSOR_ID} ({sensors.loc[ROW, 'location']}): {start:%Y-%m-%d} to {end:%Y-%m-%d}")
 
-records, page = [], 1
-while True:
-    data = openaq_get(f"/sensors/{SENSOR_ID}/hours", {
-        "datetime_from": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "datetime_to": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "limit": 1000, "page": page,
-    })
-    res = data.get("results", [])
-    records += [{"time_utc": m["period"]["datetimeFrom"]["utc"], "pm25": m["value"]} for m in res]
-    print(f"page {page}: {len(res)} rows (total {len(records)})")
-    if len(res) < 1000:
-        break
-    page += 1
+CHUNKS = DATA_RAW / "openaq_chunks"
+CHUNKS.mkdir(exist_ok=True)
+months = pd.date_range(start.tz_localize(None).replace(day=1), end.tz_localize(None), freq="MS")
+
+for m0 in months:
+    out = CHUNKS / f"{SENSOR_ID}_{m0:%Y_%m}.csv"
+    if out.exists():
+        continue
+    m1 = m0 + pd.offsets.MonthBegin(1)
+    rows, page = [], 1
+    while True:
+        data = openaq_get(f"/sensors/{SENSOR_ID}/hours", {
+            "datetime_from": f"{m0:%Y-%m-%d}T00:00:00Z",
+            "datetime_to": f"{m1:%Y-%m-%d}T00:00:00Z",
+            "limit": 1000, "page": page,
+        })
+        res = data.get("results", [])
+        rows += [{"time_utc": r["period"]["datetimeFrom"]["utc"], "pm25": r["value"]} for r in res]
+        if len(res) < 1000:
+            break
+        page += 1
+    pd.DataFrame(rows, columns=["time_utc", "pm25"]).to_csv(out, index=False)
+    print(f"{m0:%Y-%m}: {len(rows)} hours")
     time.sleep(1)
 
-pm = pd.DataFrame(records)
+pm = pd.concat([pd.read_csv(f) for f in sorted(CHUNKS.glob(f"{SENSOR_ID}_*.csv"))],
+               ignore_index=True).dropna(subset=["time_utc"])
 pm["time"] = (pd.to_datetime(pm["time_utc"], utc=True).dt.tz_convert(TZ)
               .dt.tz_localize(None).dt.floor("h"))
 pm = pm.groupby("time", as_index=False)["pm25"].mean()
@@ -110,9 +132,11 @@ print(pm["pm25"].describe())
 # ## 3. Weather (ERA5) and CAMS from Open-Meteo for the same range (no key needed)
 
 # %%
-d0 = max(pm["time"].min(), pd.Timestamp(CAMS_START)).strftime("%Y-%m-%d")
+# Weather for the full PM2.5 period (long window); CAMS exists only from CAMS_START (short window)
+d0 = pm["time"].min().strftime("%Y-%m-%d")
 d1 = min(pm["time"].max(), pd.Timestamp.now() - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
-print("Open-Meteo range:", d0, "to", d1)
+c0 = max(pd.Timestamp(d0), pd.Timestamp(CAMS_START)).strftime("%Y-%m-%d")
+print("ERA5 range:", d0, "to", d1, "| CAMS range:", c0, "to", d1)
 
 w = requests.get("https://archive-api.open-meteo.com/v1/archive", params={
     "latitude": LAT, "longitude": LON, "start_date": d0, "end_date": d1, "timezone": TZ,
@@ -126,7 +150,7 @@ era5["time"] = pd.to_datetime(era5["time"])
 era5.to_csv(DATA_RAW / "era5_weather.csv", index=False)
 
 c = requests.get("https://air-quality-api.open-meteo.com/v1/air-quality", params={
-    "latitude": LAT, "longitude": LON, "start_date": d0, "end_date": d1, "timezone": TZ,
+    "latitude": LAT, "longitude": LON, "start_date": c0, "end_date": d1, "timezone": TZ,
     "hourly": "pm2_5,pm10", "domains": "cams_global",
 }, timeout=300).json()
 if "hourly" not in c:
@@ -150,6 +174,11 @@ df.to_csv(DATA_MERGED, index=False)
 roll24 = df["pm25"].rolling(24, min_periods=18).mean()
 print(f"Rows: {len(df)} | {df.time.min()} to {df.time.max()}")
 print(f"Missing PM2.5 hours: {100 * df['pm25'].isna().mean():.1f}%")
-print(f"Missing CAMS hours:  {100 * df['cams_pm25'].isna().mean():.1f}%")
 print(f"Hours with 24-h mean > {EVENT_THRESHOLD}: {100 * (roll24 > EVENT_THRESHOLD).mean():.1f}%")
+short = df[df["time"] >= c0]
+print(f"Short window (with CAMS) from {c0}: {len(short)} rows | "
+      f"missing PM2.5 {100 * short['pm25'].isna().mean():.1f}% | "
+      f"missing CAMS {100 * short['cams_pm25'].isna().mean():.1f}%")
+print("PM2.5 hours available per year:")
+print(df.dropna(subset=["pm25"]).groupby(df["time"].dt.year).size().to_string())
 print(df.dropna().head(10).to_string(index=False))
