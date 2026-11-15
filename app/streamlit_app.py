@@ -45,7 +45,9 @@ def load_result(name):
 
 @st.cache_data
 def load_recent():
-    return pd.read_csv(DATA / "recent_features.csv.gz", parse_dates=["time"], index_col="time")
+    """Stored snapshot; only hours whose CAMS forecast reaches 72 h ahead (the last 3 days have none)."""
+    recent = pd.read_csv(DATA / "recent_features.csv.gz", parse_dates=["time"], index_col="time")
+    return recent[recent["cams_h72"].notna()]
 
 
 @st.cache_resource
@@ -299,6 +301,9 @@ with tab_results:
 
     st.subheader("Is the difference real? Diebold-Mariano and bootstrap")
     dm, boot = load_result("dm_tests.csv"), load_result("bootstrap_ci.csv")
+    st.caption("Reference model (MAE_ref) = LightGBM + CAMS (tuned). Negative DM statistic or MAE difference = "
+               "the reference is better; p < 0.05 = the difference is unlikely to be chance. Bootstrap: 95% "
+               "interval of the MAE difference from resampling whole days.")
     if dm is not None:
         st.dataframe(dm[dm.h == hr].round(3), hide_index=True)
     if boot is not None:
@@ -308,6 +313,10 @@ with tab_results:
     rq2 = load_result("rq2_random_vs_rolling.csv")
     if rq2 is not None:
         st.dataframe(rq2.round(2), hide_index=True)
+    rq2s = load_result("rq2_same_period.csv")
+    if rq2s is not None:
+        st.caption("Same comparison scored only on the rolling-origin test hours (Aug 2023 – Mar 2025):")
+        st.dataframe(rq2s.round(2), hide_index=True)
 
     st.subheader("RQ3: severe-smog warnings (cost of a miss = 10 false alarms)")
     cls = load_result("classification_summary.csv")
@@ -323,10 +332,38 @@ with tab_results:
         st.markdown("**Lead time at the start of smog episodes**")
         st.dataframe(lead.round(1), hide_index=True)
 
+    rap = load_result("rq3_recall_at_precision.csv")
+    if rap is not None and cls is not None:
+        st.markdown("**Recall at a fixed precision** (RQ3: is imbalance handling better for recall at a given precision?)")
+        st.dataframe(rap[rap.event == evn].pivot_table(index=["h", "model"], columns="precision_at_least",
+                                                       values="recall").round(3), use_container_width=True)
+    fam = load_result("false_alarms_per_month.csv")
+    if fam is not None and cls is not None:
+        st.markdown("**False alarms per month** (Very Unhealthy, cost 10:1)")
+        st.dataframe(fam[fam.h == hc].drop(columns=["event", "h"]).round(2), hide_index=True)
+    fst = load_result("classification_fold_stats.csv")
+    if fst is not None and cls is not None:
+        st.markdown("**Per-fold mean ± standard deviation** (folds with at least one event)")
+        st.dataframe(fst[(fst.event == evn) & (fst.h == hc)].drop(columns=["event", "h"]).round(3), hide_index=True)
+
+    st.subheader("Combining stations and the live system")
+    ms = load_result("multistation_backtest.csv")
+    if ms is not None:
+        st.markdown("**Filling gaps in the PM2.5 inputs with a second, calibrated sensor (Clarity)** — MAE, same test hours:")
+        st.dataframe(ms.pivot(index="model", columns="h", values="MAE").round(2), use_container_width=True)
+    lr = load_result("live_model_regression.csv")
+    if lr is not None:
+        st.markdown("**Live model without measured PM2.5 (weather + CAMS only)** — MAE, same test hours:")
+        st.dataframe(lr.pivot(index="model", columns="h", values="MAE").round(1), use_container_width=True)
+
     with st.expander("Figures used in the paper"):
-        for name, cap in [("mae_by_horizon.png", "MAE by horizon"), ("mae_by_fold.png", "MAE per test fold"),
-                          ("example_forecast.png", "Example month"), ("pr_curves_h48.png", "Precision-recall, 48 h"),
-                          ("recall_by_season.png", "Recall by season"), ("lstm_comparison.png", "LSTM comparison")]:
+        for name, cap in [("heatmap_month_hour.png", "Mean PM2.5 by month and hour"), ("acf_pm25.png", "Autocorrelation"),
+                          ("cams_vs_observed.png", "CAMS vs observed"), ("mae_by_horizon.png", "MAE by horizon"),
+                          ("mae_by_fold.png", "MAE per test fold"), ("example_forecast.png", "Example month"),
+                          ("lstm_comparison.png", "LSTM comparison"), ("pr_curves_h48.png", "Precision-recall, 48 h"),
+                          ("cost_curve.png", "Threshold vs expected cost"), ("recall_by_season.png", "Recall by season"),
+                          ("live_model_backtest.png", "Live model backtest"),
+                          ("bridge_calibration.png", "Bridge calibration of the live sensors")]:
             show_figure(name, cap)
 
 # ----------------------------------------------------------------------------- SHAP
@@ -364,6 +401,9 @@ with tab_api:
             col.error(f"⚠ Smog warning · probability {prob:.2f}")
         else:
             col.success(f"✓ No warning · probability {prob:.2f}")
+    st.caption(f"Warning thresholds were chosen on training data to minimise 10 × missed events + false alarms, "
+               f"so they are very low (about {fc.meta['event']['24']['threshold']:.3f}): a warning is issued whenever "
+               "the model sees any real chance of a Very Unhealthy day.")
     st.markdown("The same models are served by the FastAPI app (`uvicorn api.main:app`):")
     st.code("GET  /forecast?time=2025-03-01T08:00\n"
             "GET  /features/example\n"

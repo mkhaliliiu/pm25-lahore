@@ -59,7 +59,7 @@ Full tables are in [`results/`](results) and figures in [`results/figures/`](res
 ```
 notebooks/   00_colab_setup  01_data_acquisition  02_preprocess_eda  03_regression
              04_classification  05_lstm_shap  06_export_models  07_live_model  08_live_network
-             09_proposal_checks  10_clarity_bridge
+             09_proposal_checks  10_clarity_bridge  11_rq2_same_period
 src/         config.py (paths, secrets)  features.py  models.py  evaluation.py  deploy.py  live.py
 app/         streamlit_app.py, requirements.txt, data/ (small out-of-sample snapshots)
 api/         main.py (FastAPI)
@@ -94,7 +94,7 @@ docker run -p 8000:8000 pm25-lahore uvicorn api.main:app --host 0.0.0.0 --port 8
 2. Run `notebooks/00_colab_setup.py` (mounts Drive, clones the repo, installs `requirements.txt`).
 3. Run the notebooks in order with `%run notebooks/<name>.py`. Approximate times on Colab:
    03 about 22 min, 04 about 18 min, 05 about 3 min on a T4 GPU,
-   06 about 3 min, 07 about 5 min, 08 about 10 min, 09 about 5-15 min, 10 about 10 min.
+   06 about 3 min, 07 about 5 min, 08 about 10 min, 09 about 5-15 min, 10 about 10 min, 11 about 2 min.
 
 Large intermediate files (`data/`) are not committed; notebook 01 re-creates them.
 

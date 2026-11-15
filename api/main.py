@@ -26,6 +26,7 @@ app = FastAPI(
 MODEL = Forecaster("meta.json")
 LIVE_MODEL = Forecaster("meta_live.json")
 RECENT = pd.read_csv(ROOT / "app" / "data" / "recent_features.csv.gz", parse_dates=["time"], index_col="time")
+RECENT = RECENT[RECENT["cams_h72"].notna()]          # hours whose CAMS forecast covers all horizons
 
 
 class FeatureRow(BaseModel):

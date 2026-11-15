@@ -9,7 +9,7 @@
 GITHUB_USER = "mkhaliliiu"
 REPO = "pm25-lahore"
 GIT_NAME = "Muhammad Khalil"
-GIT_EMAIL = "you@example.com"          # the email linked to your GitHub account
+GIT_EMAIL = "mkiiu47@gmail.com"          
 DRIVE_DIR = "/content/drive/MyDrive"
 
 # %%  Cell 2 - mount Drive, clone the repo the first time, enter it
@@ -35,7 +35,8 @@ print("Working in:", os.getcwd())
 
 # %%  Cell 3 - make the OpenAQ key available to scripts, install packages
 os.environ["OPENAQ_API_KEY"] = userdata.get("OPENAQ_API_KEY")
-%pip install -q -r requirements.txt
+import sys
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", "requirements.txt"])
 
 # %%  Cell 4 - helper: pull and push without ever printing the token
 def git(*args):
