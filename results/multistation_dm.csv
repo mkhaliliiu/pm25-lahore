@@ -1,0 +1,7 @@
+h,model,DM_gapfill_vs_original,p_value
+24,Ridge + CAMS,2.4556,0.0141
+24,LightGBM + CAMS,-0.8029,0.422
+48,Ridge + CAMS,0.1738,0.8621
+48,LightGBM + CAMS,-1.7952,0.0726
+72,Ridge + CAMS,-0.0206,0.9836
+72,LightGBM + CAMS,1.0845,0.2782

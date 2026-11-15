@@ -1,9 +1,9 @@
 {
   "calibration": {
-    "slope": 1.0,
-    "intercept": 0.0,
-    "hours": 0,
-    "note": "identity (too little overlap)"
+    "slope": 0.9367,
+    "intercept": 17.68,
+    "method": "bridge via Clarity sensor 7466365",
+    "note": "embassy-scale = intercept + slope x live network median"
   },
   "min_sensors": 4,
   "horizons": [
