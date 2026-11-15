@@ -85,8 +85,9 @@ def show_figure(name, caption):
 
 
 st.title("Lahore PM2.5 forecasts and severe-smog warnings")
-st.caption("US Diplomatic Post monitor (OpenAQ) · ERA5 weather and CAMS forecasts (Open-Meteo) · "
-           "accuracy figures are out-of-sample, from a 10-fold rolling-origin backtest (Aug 2023 – Mar 2025).")
+st.caption("Training: US Diplomatic Post monitor (OpenAQ), ERA5 weather and CAMS forecasts (Open-Meteo) · "
+           "Live: AirGradient sensor network (OpenAQ) · accuracy figures are out-of-sample, from a 10-fold "
+           "rolling-origin backtest (Aug 2023 – Mar 2025).")
 
 tab_live, tab_explore, tab_results, tab_shap, tab_api, tab_about = st.tabs(
     ["Live forecast", "Forecast explorer", "Model results", "Explainability", "Deployed model & API", "About"])
@@ -118,7 +119,7 @@ with tab_live:
             c2.metric("Sensors at this hour", f"{int(row['n_sensors'].iloc[0])} of {res['sensors_total']}")
             c2.caption(("median of low-cost sensors, converted to the US Embassy reference scale through a "
                         "Clarity sensor that ran alongside both"
-                        if calibrated else "median of low-cost sensors (AirGradient, Hawanama); not calibrated to "
+                        if calibrated else "median of low-cost AirGradient sensors; not calibrated to "
                         "a reference monitor, because these sensors started after the US Embassy feed ended"))
         else:
             c1.metric("PM2.5 measured now", "n/a")
@@ -199,7 +200,8 @@ with tab_live:
                           var_name="series", value_name="pm25")
             vl["series"] = vl["series"].map({"measured": "Measured", "forecast": "Our forecast", "raw_cams": "Raw CAMS"})
             vchart = alt.Chart(vl).mark_line(strokeWidth=2).encode(
-                x=alt.X("target_time:T", title=None, axis=alt.Axis(format="%a %d %b")),
+                x=alt.X("target_time:T", title=None,
+                        axis=alt.Axis(format="%a %d %b", tickCount={"interval": "day", "step": 1})),
                 y=alt.Y("pm25:Q", title="PM2.5 (µg/m³)"),
                 color=alt.Color("series:N", scale=alt.Scale(domain=domain, range=colours),
                                 legend=alt.Legend(orient="top", title=None)),
@@ -219,8 +221,10 @@ with tab_live:
             lr = load_result("live_model_regression.csv")
             if lr is not None:
                 st.markdown("**Backtest, Aug 2023 – Mar 2025** (10 folds), MAE in µg/m³:")
-                st.dataframe(lr.pivot(index="model", columns="h", values="MAE").round(1), use_container_width=True)
-            st.markdown("Live sensors: 15 AirGradient and Hawanama low-cost monitors via OpenAQ, hourly median. "
+                st.dataframe(lr.pivot(index="model", columns="h", values="MAE").round(1)
+                             .rename(index={"Ridge + CAMS": "Ridge + CAMS (full model, used when sensors report)"}),
+                             use_container_width=True)
+            st.markdown(f"Live sensors: {res['sensors_total']} AirGradient low-cost monitors via OpenAQ, hourly median. "
                         + (f"Converted to the US Embassy reference scale as {cal['intercept']} + {cal['slope']} × median, "
                            "using a Clarity sensor that overlapped the Embassy monitor (2023-2025) and the live "
                            "sensors (2025-2026) as a bridge. "
@@ -310,13 +314,16 @@ with tab_results:
         st.dataframe(boot[boot.h == hr].round(2), hide_index=True)
 
     st.subheader("RQ2: a random split makes the model look better than it is")
-    rq2 = load_result("rq2_random_vs_rolling.csv")
-    if rq2 is not None:
-        st.dataframe(rq2.round(2), hide_index=True)
     rq2s = load_result("rq2_same_period.csv")
     if rq2s is not None:
-        st.caption("Same comparison scored only on the rolling-origin test hours (Aug 2023 – Mar 2025):")
+        st.caption("Shuffled 5-fold split vs rolling-origin backtest, both scored on the same test hours "
+                   "(Aug 2023 – Mar 2025). Note the ranking flips: the random split makes LightGBM look best, "
+                   "the honest backtest prefers Ridge.")
         st.dataframe(rq2s.round(2), hide_index=True)
+    rq2 = load_result("rq2_random_vs_rolling.csv")
+    if rq2 is not None:
+        with st.expander("First version: random split scored on all hours since Aug 2022 (tuned LightGBM)"):
+            st.dataframe(rq2.round(2), hide_index=True)
 
     st.subheader("RQ3: severe-smog warnings (cost of a miss = 10 false alarms)")
     cls = load_result("classification_summary.csv")
@@ -329,7 +336,8 @@ with tab_results:
                                        "false_alarm_hours_per_30d", "FN", "FP", "cost"]].round(3), hide_index=True)
     lead = load_result("lead_time.csv")
     if lead is not None:
-        st.markdown("**Lead time at the start of smog episodes**")
+        st.markdown("**Lead time at the start of smog episodes** (Very Unhealthy, cost 10:1; "
+                    "longest horizon at which the onset hour was flagged)")
         st.dataframe(lead.round(1), hide_index=True)
 
     rap = load_result("rq3_recall_at_precision.csv")
@@ -339,8 +347,8 @@ with tab_results:
                                                        values="recall").round(3), use_container_width=True)
     fam = load_result("false_alarms_per_month.csv")
     if fam is not None and cls is not None:
-        st.markdown("**False alarms per month** (Very Unhealthy, cost 10:1)")
-        st.dataframe(fam[fam.h == hc].drop(columns=["event", "h"]).round(2), hide_index=True)
+        st.markdown(f"**False alarms per month** ({evn}, {hc} h, cost 10:1)")
+        st.dataframe(fam[(fam.event == evn) & (fam.h == hc)].drop(columns=["event", "h"]).round(2), hide_index=True)
     fst = load_result("classification_fold_stats.csv")
     if fst is not None and cls is not None:
         st.markdown("**Per-fold mean ± standard deviation** (folds with at least one event)")
@@ -424,10 +432,12 @@ and a horizon-length gap, compared with persistence, weekly naive, climatology a
 Diebold-Mariano tests and day-block bootstrap intervals.
 
 **Live forecast.** The US Embassy feed ended in March 2025. The live tab therefore reads Lahore's low-cost sensor
-network on OpenAQ (AirGradient, Hawanama; hourly median of 15 sensors) together with today's Open-Meteo weather
-and CAMS forecast, and checks its own 24-hour forecasts against the sensors over the last 7 days.
+network on OpenAQ (hourly median of 15 AirGradient sensors) together with today's Open-Meteo weather and CAMS
+forecast, and checks its own 24-hour forecasts against the sensors over the last 7 days. The sensors started after
+the Embassy monitor stopped, so their median is converted to the Embassy scale through a Clarity sensor that ran
+alongside both (Embassy vs Clarity r = 0.91, Clarity vs network r = 0.95).
 
-**Limitations.** Training used one reference monitor; the live sensors are low-cost and could not be calibrated
-against it (they started after it stopped); archived CAMS values may not match the lead time of a real-time CAMS
-forecast; live weather comes from a forecast model rather than ERA5.
+**Limitations.** Training used one reference monitor; the live calibration is indirect and assumes the bridge
+sensor did not drift; archived CAMS values may not match the lead time of a real-time CAMS forecast; live weather
+comes from a forecast model rather than ERA5.
 """)
