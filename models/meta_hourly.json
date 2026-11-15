@@ -1,0 +1,15 @@
+{
+  "calibration": {
+    "slope": 1.0,
+    "intercept": 0.0,
+    "hours": 0,
+    "note": "identity (too little overlap)"
+  },
+  "min_sensors": 4,
+  "horizons": [
+    1,
+    72
+  ],
+  "sensors_file": "app/data/live_sensors.csv",
+  "note": "hourly Ridge models; 24/48/72-h warnings come from meta.json / meta_live.json"
+}
