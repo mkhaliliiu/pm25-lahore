@@ -93,6 +93,10 @@ with tab_live:
                 col.error(f"⚠ Severe-smog warning · probability {prob:.2f}")
             else:
                 col.success(f"✓ No severe-smog warning · probability {prob:.2f}")
+        st.caption("A warning means the model sees a real chance that the **24-hour mean** around that time "
+                   "exceeds 125.5 µg/m³. Warnings are set so that missing a smog day counts 10 times worse than "
+                   "a false alarm, so they lean towards caution and can appear even when the single-hour "
+                   "forecast is lower.")
 
         window = cams[(cams.index >= t - pd.Timedelta(hours=24)) & (cams.index <= t + pd.Timedelta(hours=72))]
         cams_line = window.reset_index().rename(columns={"cams_pm25": "pm25"}).assign(series="Raw CAMS forecast")
