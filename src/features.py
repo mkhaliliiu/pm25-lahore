@@ -143,3 +143,13 @@ def add_live_features(df):
 
 def feature_list_live(h):
     return LIVE_BASE + [f"cams_h{h}", f"cams_mean24_h{h}"]
+
+
+def add_cams_horizons(df, horizons):
+    """CAMS at the target hour and its 24-h mean, for any set of horizons (used by the hourly models)."""
+    m24 = df["cams_pm25"].rolling(24, min_periods=18).mean()
+    new = {}
+    for h in horizons:
+        new[f"cams_h{h}"] = df["cams_pm25"].shift(-h)
+        new[f"cams_mean24_h{h}"] = m24.shift(-h)
+    return pd.concat([df.drop(columns=[c for c in new if c in df.columns]), pd.DataFrame(new, index=df.index)], axis=1)

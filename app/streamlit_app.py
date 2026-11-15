@@ -3,6 +3,7 @@
 Run from the repository root:
     streamlit run app/streamlit_app.py
 """
+import os
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from src.deploy import HORIZONS, Forecaster, aqi_category  # noqa: E402
+from src.deploy import HORIZONS, Forecaster, HourlyRidge, aqi_category, us_aqi  # noqa: E402
 
 DATA, RES = ROOT / "app" / "data", ROOT / "results"
 FIG = RES / "figures"
@@ -52,12 +53,28 @@ def load_model(meta_name="meta.json"):
     return Forecaster(meta_name)
 
 
-@st.cache_data(ttl=1800, show_spinner="Fetching today's weather and CAMS forecast from Open-Meteo...")
+@st.cache_resource
+def load_hourly(kind):
+    return HourlyRidge(kind)
+
+
+def openaq_key():
+    """OpenAQ key from Streamlit secrets (never stored in the repository)."""
+    try:
+        return st.secrets["OPENAQ_API_KEY"]
+    except Exception:
+        return os.getenv("OPENAQ_API_KEY")
+
+
+@st.cache_data(ttl=1800, show_spinner="Reading Lahore's live sensors (OpenAQ) and weather + CAMS (Open-Meteo)...")
 def get_live():
-    """Live inputs are refreshed at most every 30 minutes."""
-    from src.live import fetch_live
-    row, cams, missing = fetch_live()
-    return row, cams, missing, load_model("meta_live.json").predict(row)
+    """Live inputs and forecasts, refreshed at most every 30 minutes."""
+    from src.live import build_live, verification
+    res = build_live(openaq_key())
+    hourly = load_hourly("full" if res["anchored"] else "live").predict(res["row"]).iloc[0]
+    warn = load_model("meta.json" if res["anchored"] else "meta_live.json").predict(res["row"]).iloc[0]
+    ver = verification(res["frame"], load_hourly("full"), res["issue"]) if res["anchored"] else pd.DataFrame()
+    return res, hourly, warn, ver
 
 
 def show_figure(name, caption):
@@ -75,60 +92,134 @@ tab_live, tab_explore, tab_results, tab_shap, tab_api, tab_about = st.tabs(
 # ----------------------------------------------------------------------------- live
 with tab_live:
     try:
-        row, cams, missing, pred = get_live()
+        res, hourly, warn, ver = get_live()
     except Exception as e:
-        st.warning(f"Open-Meteo could not be reached just now, so there is no live forecast. ({e})")
+        st.warning(f"Live data could not be fetched just now, so there is no live forecast. ({e})")
     else:
-        live_meta = load_model("meta_live.json").meta
-        t = row.index[0]
-        p = pred.iloc[0]
-        st.subheader(f"Lahore, forecast issued {t:%d %b %Y, %H:%M} (Pakistan time)")
+        df_l, row, t = res["frame"], res["row"], res["issue"]
+        anchored = res["anchored"]
+        st.subheader(f"Lahore right now · {t:%a %d %b %Y, %H:%M} (Pakistan time)")
+        if anchored:
+            st.caption(f"Forecast mode: **full model**, anchored on {res['sensors_responding']} of "
+                       f"{res['sensors_total']} live sensors (OpenAQ) + weather and CAMS (Open-Meteo).")
+        else:
+            st.caption("Forecast mode: **weather + CAMS only** (live sensor data unavailable right now).")
+
+        # ---- current status, reading by reading
+        c1, c2, c3, c4 = st.columns(4)
+        if anchored:
+            pm_now = row["pm25_obs"].iloc[0]
+            c1.metric("PM2.5 measured now", f"{pm_now:.0f} µg/m³")
+            c1.caption(f"US AQI **{us_aqi(pm_now)}** · {aqi_category(pm_now)}")
+            c2.metric("Sensors reporting", f"{int(row['n_sensors'].iloc[0])}")
+            c2.caption(f"raw network median {row['pm25_raw_network'].iloc[0]:.0f} µg/m³, calibrated to the "
+                       "US Embassy reference monitor")
+        else:
+            c1.metric("PM2.5 measured now", "n/a")
+            c1.caption("no live sensor data")
+            c2.metric("Sensors reporting", f"{res['sensors_responding']}")
+        cams_now = row["cams_pm25"].iloc[0]
+        c3.metric("CAMS model now", f"{cams_now:.0f} µg/m³")
+        c3.caption(f"US AQI {us_aqi(cams_now)} · the global model we correct")
+        c4.metric("Weather now", f"{row['temperature_2m'].iloc[0]:.0f} °C")
+        c4.caption(f"humidity {row['relative_humidity_2m'].iloc[0]:.0f}% · wind {row['wind_speed_10m'].iloc[0]:.0f} km/h"
+                   + (f" · mixing height {row['boundary_layer_height'].iloc[0]:.0f} m"
+                      if pd.notna(row['boundary_layer_height'].iloc[0]) else ""))
+
+        # ---- 24 / 48 / 72 h cards with warnings
         cols = st.columns(len(HORIZONS))
         for col, hh in zip(cols, HORIZONS):
-            pm = p[f"pm25_h{hh}"]
+            pm = hourly[hh]
             col.metric(f"{(t + pd.Timedelta(hours=hh)):%a %d %b, %H:%M} (+{hh} h)", f"{pm:.0f} µg/m³")
-            col.caption(f"US EPA category: **{aqi_category(pm)}** · raw CAMS {row[f'cams_h{hh}'].iloc[0]:.0f} µg/m³")
-            prob = p[f"event_prob_h{hh}"]
-            if p[f"event_warning_h{hh}"]:
+            col.caption(f"US AQI **{us_aqi(pm)}** · {aqi_category(pm)} · raw CAMS {row[f'cams_h{hh}'].iloc[0]:.0f}")
+            prob = warn[f"event_prob_h{hh}"]
+            if warn[f"event_warning_h{hh}"]:
                 col.error(f"⚠ Severe-smog warning · probability {prob:.2f}")
             else:
                 col.success(f"✓ No severe-smog warning · probability {prob:.2f}")
-        st.caption("A warning means the model sees a real chance that the **24-hour mean** around that time "
-                   "exceeds 125.5 µg/m³. Warnings are set so that missing a smog day counts 10 times worse than "
-                   "a false alarm, so they lean towards caution and can appear even when the single-hour "
-                   "forecast is lower.")
+        st.caption("A warning means a real chance that the **24-hour mean** around that time exceeds 125.5 µg/m³. "
+                   "Missing a smog day counts 10 times worse than a false alarm, so warnings lean towards caution.")
 
-        window = cams[(cams.index >= t - pd.Timedelta(hours=24)) & (cams.index <= t + pd.Timedelta(hours=72))]
-        cams_line = window.reset_index().rename(columns={"cams_pm25": "pm25"}).assign(series="Raw CAMS forecast")
-        points = pd.DataFrame({"time": [t + pd.Timedelta(hours=hh) for hh in HORIZONS],
-                               "pm25": [p[f"pm25_h{hh}"] for hh in HORIZONS], "series": "Our forecast"})
-        domain, colours = ["Raw CAMS forecast", "Our forecast"], ["#eb6834", "#2a78d6"]
-        enc = dict(x=alt.X("time:T", title=None, axis=alt.Axis(format="%a %d %b %H:%M", tickCount=8)),
-                   y=alt.Y("pm25:Q", title="PM2.5 (µg/m³)"),
-                   color=alt.Color("series:N", scale=alt.Scale(domain=domain, range=colours),
-                                   legend=alt.Legend(orient="top", title=None)),
-                   tooltip=[alt.Tooltip("time:T", format="%d %b %H:%M"), "series:N",
-                            alt.Tooltip("pm25:Q", title="PM2.5", format=".0f")])
-        chart = (alt.Chart(cams_line).mark_line(strokeWidth=2).encode(**enc)
-                 + alt.Chart(points).mark_circle(size=140, stroke="white", strokeWidth=2, opacity=1).encode(**enc)
+        # ---- chart: measured past, hourly forecast, CAMS
+        past = df_l[(df_l.index >= t - pd.Timedelta(hours=72)) & (df_l.index <= t)]
+        fut = df_l[(df_l.index > t) & (df_l.index <= t + pd.Timedelta(hours=72))]
+        fc_times = [t + pd.Timedelta(hours=int(h)) for h in hourly.index]
+        parts = [pd.DataFrame({"time": fc_times, "pm25": hourly.to_numpy(), "series": "Our forecast"}),
+                 pd.concat([past, fut])[["cams_pm25"]].reset_index().rename(columns={"cams_pm25": "pm25"})
+                 .assign(series="Raw CAMS")]
+        if anchored:
+            parts.append(past[["pm25_obs"]].reset_index().rename(columns={"pm25_obs": "pm25"}).assign(series="Measured"))
+        line = pd.concat(parts, ignore_index=True).dropna()
+        line["us_aqi"] = line["pm25"].map(us_aqi)
+        domain, colours = ["Measured", "Our forecast", "Raw CAMS"], ["#52514e", "#2a78d6", "#eb6834"]
+        hover = alt.selection_point(fields=["time"], nearest=True, on="pointerover", empty=False)
+        base = alt.Chart(line).encode(
+            x=alt.X("time:T", title=None, axis=alt.Axis(format="%a %d %b %H:%M", tickCount=8)),
+            y=alt.Y("pm25:Q", title="PM2.5 (µg/m³)"),
+            color=alt.Color("series:N", scale=alt.Scale(domain=domain, range=colours),
+                            legend=alt.Legend(orient="top", title=None)))
+        chart = (base.mark_line(strokeWidth=2)
+                 + base.mark_circle(size=60).encode(
+                     opacity=alt.condition(hover, alt.value(1), alt.value(0)),
+                     tooltip=[alt.Tooltip("time:T", format="%a %d %b %H:%M"), "series:N",
+                              alt.Tooltip("pm25:Q", title="PM2.5 µg/m³", format=".0f"),
+                              alt.Tooltip("us_aqi:Q", title="US AQI")]).add_params(hover)
                  + alt.Chart(pd.DataFrame({"y": [THRESHOLD]})).mark_rule(strokeDash=[4, 4], color="#8a8985").encode(y="y:Q")
                  + alt.Chart(pd.DataFrame({"time": [t]})).mark_rule(color="#8a8985").encode(x="time:T"))
-        st.altair_chart(chart.properties(height=340), use_container_width=True)
-        st.caption("Solid vertical line: now. Dashed line: 125.5 µg/m³ (US EPA 'Very Unhealthy'). "
-                   "Our forecast corrects the CAMS forecast for Lahore using the current weather.")
+        st.altair_chart(chart.properties(height=360), use_container_width=True)
+        st.caption("Left of the vertical line: last 3 days. Right: hour-by-hour forecast for the next 72 hours. "
+                   "Dashed line: 125.5 µg/m³ (US EPA 'Very Unhealthy').")
 
-        lr = load_result("live_model_regression.csv")
-        if lr is not None:
-            name = live_meta["regression_model"]
-            acc = lr[lr.model.isin(["Raw CAMS", "Persistence", name, "Ridge + CAMS"])].pivot(
-                index="model", columns="h", values="MAE").round(1)
-            acc.columns = [f"MAE {c} h" for c in acc.columns]
-            st.markdown("**How accurate is the live model?** Backtest MAE (µg/m³), same test hours as the main results:")
-            st.dataframe(acc.rename(index={"Ridge + CAMS": "Full model (needs measured PM2.5)"}))
-        st.info("The live model uses only Open-Meteo inputs (current weather, current CAMS value and the CAMS "
-                "forecast), because the US Embassy monitor's public feed ended in March 2025. "
-                + (f"Not provided by Open-Meteo right now: {', '.join(missing)} (filled automatically). " if missing else "")
-                + "Live weather comes from a forecast model, not the ERA5 reanalysis used in training.")
+        with st.expander("Hour-by-hour forecast table (µg/m³ and US AQI, comparable with IQAir / Punjab AQI apps)"):
+            table = pd.DataFrame({"Time (PKT)": [x.strftime("%a %d %b %H:%M") for x in fc_times],
+                                  "PM2.5 forecast (µg/m³)": hourly.round(0).astype(int).to_numpy(),
+                                  "US AQI": [us_aqi(v) for v in hourly],
+                                  "Category": [aqi_category(v) for v in hourly],
+                                  "Raw CAMS (µg/m³)": [round(row[f"cams_h{int(h)}"].iloc[0]) for h in hourly.index]})
+            st.dataframe(table, hide_index=True, height=420)
+            st.caption("Note: IQAir and the Punjab AQI site show the AQI index, not µg/m³. "
+                       "For example AQI 227 = 152 µg/m³.")
+
+        # ---- verification over the last 7 days
+        if len(ver):
+            st.subheader("How did our 24-hour forecasts do over the last 7 days?")
+            mae_ours = (ver.forecast - ver.measured).abs().mean()
+            mae_cams = (ver.raw_cams - ver.measured).abs().mean()
+            v1, v2, v3 = st.columns(3)
+            v1.metric("Our MAE", f"{mae_ours:.0f} µg/m³")
+            v2.metric("Raw CAMS MAE", f"{mae_cams:.0f} µg/m³")
+            v3.metric("Hours checked", f"{len(ver)}")
+            vl = ver.melt(id_vars="target_time", value_vars=["measured", "forecast", "raw_cams"],
+                          var_name="series", value_name="pm25")
+            vl["series"] = vl["series"].map({"measured": "Measured", "forecast": "Our forecast", "raw_cams": "Raw CAMS"})
+            vchart = alt.Chart(vl).mark_line(strokeWidth=2).encode(
+                x=alt.X("target_time:T", title=None, axis=alt.Axis(format="%a %d %b")),
+                y=alt.Y("pm25:Q", title="PM2.5 (µg/m³)"),
+                color=alt.Color("series:N", scale=alt.Scale(domain=domain, range=colours),
+                                legend=alt.Legend(orient="top", title=None)),
+                tooltip=[alt.Tooltip("target_time:T", format="%d %b %H:%M"), "series:N",
+                         alt.Tooltip("pm25:Q", format=".0f")])
+            st.altair_chart(vchart.properties(height=280), use_container_width=True)
+            st.caption("Each forecast was made 24 hours before the measurement, from the live inputs available "
+                       "then. CAMS values for past days come from Open-Meteo's latest runs, so this check slightly "
+                       "favours CAMS.")
+
+        with st.expander("How accurate is this, and where do the numbers come from?"):
+            nt = load_result("network_pipeline_test.csv")
+            if nt is not None:
+                st.markdown("**Deployment test, Nov 2024 – Mar 2025** (live sensors as inputs, US Embassy "
+                            "monitor as truth), MAE in µg/m³:")
+                st.dataframe(nt.pivot(index="model", columns="h", values="MAE").round(1), use_container_width=True)
+            lr = load_result("live_model_regression.csv")
+            if lr is not None:
+                st.markdown("**Backtest, Aug 2023 – Mar 2025** (10 folds), MAE in µg/m³:")
+                st.dataframe(lr.pivot(index="model", columns="h", values="MAE").round(1), use_container_width=True)
+            cal = res["calibration"]
+            st.markdown(f"Live sensors: AirGradient and Hawanama low-cost monitors via OpenAQ; their hourly median "
+                        f"is converted to the reference scale as {cal['intercept']} + {cal['slope']} × median "
+                        f"({cal.get('note', '')}). Weather and CAMS: Open-Meteo. "
+                        + (f"Not provided by Open-Meteo right now: {', '.join(res['missing_weather'])}. "
+                           if res["missing_weather"] else ""))
 
 # ----------------------------------------------------------------------------- explorer
 with tab_explore:

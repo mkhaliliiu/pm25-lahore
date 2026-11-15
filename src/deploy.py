@@ -23,10 +23,42 @@ AQI_BANDS = [(9.0, "Good"), (35.4, "Moderate"), (55.4, "Unhealthy for Sensitive 
              (125.4, "Unhealthy"), (225.4, "Very Unhealthy"), (float("inf"), "Hazardous")]
 
 
+# US EPA PM2.5 -> AQI breakpoints (2024 revision): (C_low, C_high, AQI_low, AQI_high)
+AQI_BREAKS = [(0.0, 9.0, 0, 50), (9.1, 35.4, 51, 100), (35.5, 55.4, 101, 150),
+              (55.5, 125.4, 151, 200), (125.5, 225.4, 201, 300), (225.5, 325.4, 301, 500)]
+
+
 def aqi_category(pm25):
     if pm25 is None or np.isnan(pm25):
         return "No data"
     return next(name for upper, name in AQI_BANDS if pm25 <= upper)
+
+
+def us_aqi(pm25):
+    """US AQI from a PM2.5 concentration (µg/m³), the number IQAir and most apps show."""
+    if pm25 is None or np.isnan(pm25):
+        return np.nan
+    c = np.floor(max(pm25, 0) * 10) / 10
+    for lo, hi, a_lo, a_hi in AQI_BREAKS:
+        if c <= hi:
+            return int(round((a_hi - a_lo) / (hi - lo) * (c - lo) + a_lo))
+    return 500
+
+
+def ridge_predict(m, X):
+    x = _matrix(X, m["features"], m["median"])
+    return np.maximum(((x - m["mean"]) / m["scale"]) @ np.asarray(m["coef"]) + m["intercept"], 0)
+
+
+class HourlyRidge:
+    """Ridge models for every horizon 1..72 h (models/hourly_full.json or hourly_live.json),
+    used for the hour-by-hour forecast curve on the live tab."""
+
+    def __init__(self, kind="full", model_dir=MODEL_DIR):
+        self.models = {int(h): m for h, m in json.loads((Path(model_dir) / f"hourly_{kind}.json").read_text()).items()}
+
+    def predict(self, X):
+        return pd.DataFrame({h: ridge_predict(m, X) for h, m in sorted(self.models.items())}, index=X.index)
 
 
 def ridge_to_dict(pipe, features):
@@ -69,8 +101,7 @@ class Forecaster:
         for h in HORIZONS:
             spec, m = self.meta["pm25"][str(h)], self.pm25[h]
             if spec["format"] == "ridge_json":
-                x = _matrix(X, m["features"], m["median"])
-                pm = ((x - m["mean"]) / m["scale"]) @ np.asarray(m["coef"]) + m["intercept"]
+                pm = ridge_predict(m, X)
             else:
                 pm = m.predict(_matrix(X, spec["features"]))          # LightGBM handles missing values
             out[f"pm25_h{h}"] = np.maximum(pm, 0)

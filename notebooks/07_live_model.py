@@ -179,18 +179,18 @@ print("Exported live models reproduce the fitted models exactly.")
 
 # %%
 try:
-    from src.live import fetch_live
-    row, cams_hourly, missing = fetch_live()
+    from src.live import build_live
+    res = build_live(api_key=None)            # weather + CAMS only; notebook 08 adds the live sensors
+    row, t = res["row"], res["issue"]
     p = fc.predict(row).iloc[0]
-    t = row.index[0]
     print(f"\nLive forecast issued {t:%Y-%m-%d %H:%M} PKT"
-          + (f" (Open-Meteo did not provide: {missing})" if missing else ""))
+          + (f" (Open-Meteo did not provide: {res['missing_weather']})" if res["missing_weather"] else ""))
     for h in HORIZONS:
         pm = p[f"pm25_h{h}"]
         print(f"  +{h} h ({t + pd.Timedelta(hours=h):%d %b %H:%M}): {pm:6.1f} µg/m³ ({aqi_category(pm)}) | "
               f"raw CAMS {row[f'cams_h{h}'].iloc[0]:6.1f} | smog probability {p[f'event_prob_h{h}']:.2f} "
               f"{'-> WARNING' if p[f'event_warning_h{h}'] else ''}")
 except Exception as e:                      # the export above is already saved either way
-    print(f"\nLive test skipped: {e}")
+    print(f"\nLive test skipped (run notebook 08 first for the live configuration): {e}")
 
 print(f"\nDone in {(time.time() - t_start) / 60:.1f} min.")

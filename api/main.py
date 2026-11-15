@@ -58,14 +58,27 @@ def health():
 
 @app.get("/live")
 def live():
-    """Live forecast for Lahore from today's Open-Meteo weather and CAMS forecast (weather + CAMS model)."""
-    from src.live import fetch_live
+    """Live forecast for Lahore: anchored on the live sensor network (OpenAQ, if OPENAQ_API_KEY is set)
+    plus today's Open-Meteo weather and CAMS forecast; falls back to weather + CAMS only."""
+    import os
+    from src.deploy import HourlyRidge, us_aqi
+    from src.live import build_live
     try:
-        row, _, missing = fetch_live()
+        res = build_live(os.getenv("OPENAQ_API_KEY"))
     except Exception as e:
-        raise HTTPException(503, f"Open-Meteo unavailable: {e}")
-    out = _response(row[LIVE_MODEL.features], row.index[0].isoformat(), LIVE_MODEL)
-    out["inputs_not_provided_by_open_meteo"] = missing
+        raise HTTPException(503, f"Live data unavailable: {e}")
+    row, t = res["row"], res["issue"]
+    model = MODEL if res["anchored"] else LIVE_MODEL
+    out = _response(row[model.features], t.isoformat(), model)
+    hourly = HourlyRidge("full" if res["anchored"] else "live").predict(row).iloc[0]
+    pm_now = row["pm25_obs"].iloc[0]
+    out["now"] = {"pm25_ugm3": None if pd.isna(pm_now) else round(float(pm_now), 1),
+                  "us_aqi": None if pd.isna(pm_now) else us_aqi(pm_now),
+                  "sensors_reporting": res["sensors_responding"], "cams_pm25_ugm3": round(float(row["cams_pm25"].iloc[0]), 1)}
+    out["hourly"] = [{"target_time": (t + pd.Timedelta(hours=int(h))).isoformat(), "pm25_ugm3": round(float(v), 1),
+                      "us_aqi": us_aqi(v)} for h, v in hourly.items()]
+    out["mode"] = "anchored on live sensors" if res["anchored"] else "weather + CAMS only"
+    out["inputs_not_provided_by_open_meteo"] = res["missing_weather"]
     return out
 
 
