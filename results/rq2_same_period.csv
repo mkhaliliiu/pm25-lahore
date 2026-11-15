@@ -1,0 +1,7 @@
+h,model,hours,random_MAE,random_R2,rolling_MAE,rolling_R2,MAE_underestimated_by_pct
+24,LightGBM + CAMS (tuned),10504,42.724,0.727,55.794,0.548,23.427
+24,Ridge + CAMS,10504,50.339,0.658,53.762,0.609,6.367
+48,LightGBM + CAMS (tuned),10457,44.043,0.712,60.729,0.478,27.476
+48,Ridge + CAMS,10457,53.592,0.638,56.829,0.578,5.695
+72,LightGBM + CAMS (tuned),10412,43.747,0.717,61.805,0.473,29.217
+72,Ridge + CAMS,10412,54.79,0.63,57.815,0.566,5.231
