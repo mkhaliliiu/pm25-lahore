@@ -27,7 +27,12 @@ result comes from an out-of-sample **rolling-origin backtest**.
   Its cost is 2,572, against 6,844 for persistence. It flagged all 7 smog episodes that began after three
   clean days at least 48 h in advance; persistence and raw CAMS flagged none.
   Choosing the threshold by cost mattered more than resampling. SMOTE helped most for the rarer
-  "Hazardous" (> 225.5) event.
+  "Hazardous" (> 225.5) event. At a fixed precision of 0.90, imbalance handling changed recall by at most
+  about 3 points; machine learning beat persistence at 48 and 72 h.
+- **Combining stations:** filling gaps in the PM2.5 inputs with a second sensor (Clarity, calibrated per fold
+  on training data) added about 1,600 input hours per fold but did not change accuracy (|ΔMAE| ≤ 0.3 µg/m³).
+- **Live check (8–15 Nov 2026, 169 hours):** 24-hour forecasts had MAE 60 µg/m³ against the calibrated
+  sensor network, versus 84 for raw CAMS.
 
 ## Live forecast
 
@@ -35,9 +40,10 @@ The US Embassy monitor's public feed ended in March 2025, but Lahore has about 5
 sensors on OpenAQ (AirGradient and Hawanama networks). The live tab and the API's `/live` endpoint:
 
 1. read 15 of these sensors through the OpenAQ API and take the hourly median;
-2. check whether it can be calibrated to the Embassy monitor (`notebooks/08_live_network.py`). None of the
-   live sensors has data from the period when the Embassy monitor ran, so no calibration was possible and the
-   median is used as measured;
+2. convert the median to the Embassy (training) scale. None of the live sensors ran while the Embassy
+   monitor did, so a Clarity sensor that overlapped both is used as a bridge (`notebooks/10_clarity_bridge.py`):
+   Embassy vs Clarity, Nov 2023 – Mar 2025 (r = 0.91), and Clarity vs live network, May 2025 – Sep 2026
+   (r = 0.95). Combined: Embassy scale = 17.7 + 0.937 × network median;
 3. feed it, with Open-Meteo weather and the CAMS forecast, to the full model for an hour-by-hour
    72-hour forecast, and show the current reading as µg/m³ and US AQI;
 4. check the last 7 days of 24-hour forecasts against the measurements.
@@ -52,7 +58,8 @@ Full tables are in [`results/`](results) and figures in [`results/figures/`](res
 
 ```
 notebooks/   00_colab_setup  01_data_acquisition  02_preprocess_eda  03_regression
-             04_classification  05_lstm_shap  06_export_models  07_live_model  08_live_network  09_proposal_checks
+             04_classification  05_lstm_shap  06_export_models  07_live_model  08_live_network
+             09_proposal_checks  10_clarity_bridge
 src/         config.py (paths, secrets)  features.py  models.py  evaluation.py  deploy.py  live.py
 app/         streamlit_app.py, requirements.txt, data/ (small out-of-sample snapshots)
 api/         main.py (FastAPI)
@@ -87,22 +94,24 @@ docker run -p 8000:8000 pm25-lahore uvicorn api.main:app --host 0.0.0.0 --port 8
 2. Run `notebooks/00_colab_setup.py` (mounts Drive, clones the repo, installs `requirements.txt`).
 3. Run the notebooks in order with `%run notebooks/<name>.py`. Approximate times on Colab:
    03 about 22 min, 04 about 18 min, 05 about 3 min on a T4 GPU,
-   06 about 3 min, 07 about 5 min, 08 about 10 min, 09 about 5-15 min.
+   06 about 3 min, 07 about 5 min, 08 about 10 min, 09 about 5-15 min, 10 about 10 min.
 
 Large intermediate files (`data/`) are not committed; notebook 01 re-creates them.
 
 ## Data sources
 
 - **PM2.5:** US Diplomatic Post Lahore via [OpenAQ](https://openaq.org) (sensor 25135), hourly,
-  May 2019 to Mar 2025. The station's public feed ends in March 2025, so the deployed demo runs on
-  stored data.
+  May 2019 to Mar 2025 (training and backtest). Live: 15 AirGradient and Hawanama low-cost sensors via
+  OpenAQ, with a Clarity sensor (7466365) as the calibration bridge.
 - **Weather:** ERA5 reanalysis via the [Open-Meteo](https://open-meteo.com) historical API.
 - **CAMS:** Copernicus Atmosphere Monitoring Service global PM2.5 forecast via the Open-Meteo
   Air Quality API (available from Aug 2022).
 
 ## Limitations
 
-- The data comes from a single monitor.
+- Training and evaluation use a single reference monitor.
+- Live readings are calibrated only indirectly, through one Clarity sensor, assuming it did not drift
+  between the two calibration periods; live weather comes from a forecast model rather than ERA5.
 - Archived CAMS values may not match the lead time of a real-time CAMS forecast.
 - Tree-model probabilities are poorly calibrated, so the cost-optimal thresholds are very low
   and give more false alarms than persistence.
