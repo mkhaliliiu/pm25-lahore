@@ -19,7 +19,7 @@ DATA, RES = ROOT / "app" / "data", ROOT / "results"
 FIG = RES / "figures"
 THRESHOLD = 125.5
 SERIES = {  # name in the snapshot -> (label, colour); fixed order so colours never shift
-    "y": ("Observed", "#52514e"),
+    "y": ("Observed", "#8f8e8a"),
     "Ridge + CAMS": ("Forecast (Ridge + CAMS)", "#2a78d6"),
     "Raw CAMS": ("Raw CAMS", "#eb6834"),
     "Persistence": ("Persistence", "#1baf7a"),
@@ -98,10 +98,12 @@ with tab_live:
     else:
         df_l, row, t = res["frame"], res["row"], res["issue"]
         anchored = res["anchored"]
-        st.subheader(f"Lahore right now · {t:%a %d %b %Y, %H:%M} (Pakistan time)")
+        cal = res["calibration"]
+        calibrated = not (cal["slope"] == 1 and cal["intercept"] == 0)
+        st.subheader(f"Lahore now · latest measured hour {t:%a %d %b %Y, %H:%M} (Pakistan time)")
         if anchored:
-            st.caption(f"Forecast mode: **full model**, anchored on {res['sensors_responding']} of "
-                       f"{res['sensors_total']} live sensors (OpenAQ) + weather and CAMS (Open-Meteo).")
+            st.caption(f"Forecast mode: **full model**, anchored on the live sensor network (OpenAQ) + weather and "
+                       f"CAMS (Open-Meteo). Sensors publish with a delay of about 1-2 hours.")
         else:
             st.caption("Forecast mode: **weather + CAMS only** (live sensor data unavailable right now).")
 
@@ -111,9 +113,10 @@ with tab_live:
             pm_now = row["pm25_obs"].iloc[0]
             c1.metric("PM2.5 measured now", f"{pm_now:.0f} µg/m³")
             c1.caption(f"US AQI **{us_aqi(pm_now)}** · {aqi_category(pm_now)}")
-            c2.metric("Sensors reporting", f"{int(row['n_sensors'].iloc[0])}")
-            c2.caption(f"raw network median {row['pm25_raw_network'].iloc[0]:.0f} µg/m³, calibrated to the "
-                       "US Embassy reference monitor")
+            c2.metric("Sensors at this hour", f"{int(row['n_sensors'].iloc[0])} of {res['sensors_total']}")
+            c2.caption(("median of low-cost sensors, calibrated to the US Embassy reference scale"
+                        if calibrated else "median of low-cost sensors (AirGradient, Hawanama); not calibrated to "
+                        "a reference monitor, because these sensors started after the US Embassy feed ended"))
         else:
             c1.metric("PM2.5 measured now", "n/a")
             c1.caption("no live sensor data")
@@ -151,7 +154,7 @@ with tab_live:
             parts.append(past[["pm25_obs"]].reset_index().rename(columns={"pm25_obs": "pm25"}).assign(series="Measured"))
         line = pd.concat(parts, ignore_index=True).dropna()
         line["us_aqi"] = line["pm25"].map(us_aqi)
-        domain, colours = ["Measured", "Our forecast", "Raw CAMS"], ["#52514e", "#2a78d6", "#eb6834"]
+        domain, colours = ["Measured", "Our forecast", "Raw CAMS"], ["#8f8e8a", "#2a78d6", "#eb6834"]
         hover = alt.selection_point(fields=["time"], nearest=True, on="pointerover", empty=False)
         base = alt.Chart(line).encode(
             x=alt.X("time:T", title=None, axis=alt.Axis(format="%a %d %b %H:%M", tickCount=8)),
@@ -214,10 +217,11 @@ with tab_live:
             if lr is not None:
                 st.markdown("**Backtest, Aug 2023 – Mar 2025** (10 folds), MAE in µg/m³:")
                 st.dataframe(lr.pivot(index="model", columns="h", values="MAE").round(1), use_container_width=True)
-            cal = res["calibration"]
-            st.markdown(f"Live sensors: AirGradient and Hawanama low-cost monitors via OpenAQ; their hourly median "
-                        f"is converted to the reference scale as {cal['intercept']} + {cal['slope']} × median "
-                        f"({cal.get('note', '')}). Weather and CAMS: Open-Meteo. "
+            st.markdown("Live sensors: 15 AirGradient and Hawanama low-cost monitors via OpenAQ, hourly median. "
+                        + (f"Converted to the reference scale as {cal['intercept']} + {cal['slope']} × median. "
+                           if calibrated else "No calibration to the reference monitor was possible (no period in "
+                           "which both ran), so live readings can differ in level from the training data. ")
+                        + "Weather and CAMS: Open-Meteo. "
                         + (f"Not provided by Open-Meteo right now: {', '.join(res['missing_weather'])}. "
                            if res["missing_weather"] else ""))
 
@@ -376,6 +380,11 @@ the CAMS forecast for the target hour. Evaluation is a 10-fold rolling-origin ba
 and a horizon-length gap, compared with persistence, weekly naive, climatology and raw CAMS, with
 Diebold-Mariano tests and day-block bootstrap intervals.
 
-**Limitations.** One monitor; archived CAMS values may not match the lead time of a real-time CAMS forecast;
-the station feed ended in March 2025, so live forecasting needs a new data source.
+**Live forecast.** The US Embassy feed ended in March 2025. The live tab therefore reads Lahore's low-cost sensor
+network on OpenAQ (AirGradient, Hawanama; hourly median of 15 sensors) together with today's Open-Meteo weather
+and CAMS forecast, and checks its own 24-hour forecasts against the sensors over the last 7 days.
+
+**Limitations.** Training used one reference monitor; the live sensors are low-cost and could not be calibrated
+against it (they started after it stopped); archived CAMS values may not match the lead time of a real-time CAMS
+forecast; live weather comes from a forecast model rather than ERA5.
 """)
