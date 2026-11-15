@@ -114,7 +114,8 @@ with tab_live:
             c1.metric("PM2.5 measured now", f"{pm_now:.0f} µg/m³")
             c1.caption(f"US AQI **{us_aqi(pm_now)}** · {aqi_category(pm_now)}")
             c2.metric("Sensors at this hour", f"{int(row['n_sensors'].iloc[0])} of {res['sensors_total']}")
-            c2.caption(("median of low-cost sensors, calibrated to the US Embassy reference scale"
+            c2.caption(("median of low-cost sensors, converted to the US Embassy reference scale through a "
+                        "Clarity sensor that ran alongside both"
                         if calibrated else "median of low-cost sensors (AirGradient, Hawanama); not calibrated to "
                         "a reference monitor, because these sensors started after the US Embassy feed ended"))
         else:
@@ -218,7 +219,9 @@ with tab_live:
                 st.markdown("**Backtest, Aug 2023 – Mar 2025** (10 folds), MAE in µg/m³:")
                 st.dataframe(lr.pivot(index="model", columns="h", values="MAE").round(1), use_container_width=True)
             st.markdown("Live sensors: 15 AirGradient and Hawanama low-cost monitors via OpenAQ, hourly median. "
-                        + (f"Converted to the reference scale as {cal['intercept']} + {cal['slope']} × median. "
+                        + (f"Converted to the US Embassy reference scale as {cal['intercept']} + {cal['slope']} × median, "
+                           "using a Clarity sensor that overlapped the Embassy monitor (2023-2025) and the live "
+                           "sensors (2025-2026) as a bridge. "
                            if calibrated else "No calibration to the reference monitor was possible (no period in "
                            "which both ran), so live readings can differ in level from the training data. ")
                         + "Weather and CAMS: Open-Meteo. "
