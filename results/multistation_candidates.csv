@@ -1,0 +1,93 @@
+location,sensor_id,provider,is_monitor,first,last,overlap_days
+Lahore,7466365,Clarity,False,2023-11-28 21:58:05,2026-09-01 01:03:02,462.0
+"Barki, Lahore",13137726,AirGradient,False,2025-05-24 22:00:00,2026-11-06 19:00:00,0.0
+Civil Secretariat,13153587,AirGradient,False,2025-05-26 12:00:00,2026-11-15 13:00:00,0.0
+Learning Alliance Intl. DHA,13154528,AirGradient,False,2025-05-26 14:00:00,2026-11-15 13:00:00,0.0
+FOOT & MOUTH DISEASE RESEARCH CENTRE,13155469,AirGradient,False,2025-05-26 16:00:00,2026-11-15 13:00:00,0.0
+"HBFC Society, DHA Phase 5 (Hussainy House)",13156083,AirGradient,False,2025-05-26 18:00:00,2026-11-15 13:00:00,0.0
+Gajju Matta (Kahna),13163333,AirGradient,False,2025-05-27 12:00:00,2026-10-06 12:00:00,0.0
+Sandha Road,13182280,AirGradient,False,2025-05-29 13:00:00,2026-11-15 13:00:00,0.0
+Ravi Road,13183459,AirGradient,False,2025-05-29 16:00:00,2026-11-15 13:00:00,0.0
+Shalimar Town,13184347,AirGradient,False,2025-05-29 18:00:00,2026-11-15 13:00:00,0.0
+"IEEE, Punjab University, LHR",13190998,AirGradient,False,2025-05-30 12:00:00,2026-11-15 13:00:00,0.0
+Johar Town,13191315,AirGradient,False,2025-05-30 13:00:00,2026-01-08 10:00:00,0.0
+Model Town,13192746,AirGradient,False,2025-05-30 17:00:00,2026-11-15 13:00:00,0.0
+College Road,13223107,AirGradient,False,2025-06-02 23:00:00,2026-11-15 13:00:00,0.0
+"Assistant Commissioner Office, Allama Iqbal ",13229197,AirGradient,False,2025-06-03 14:00:00,2025-08-01 15:00:00,0.0
+Kahna Hospital ,13230942,AirGradient,False,2025-06-03 19:00:00,2026-11-15 13:00:00,0.0
+Gulberg III,13238783,AirGradient,False,2025-06-04 17:00:00,2026-11-15 13:00:00,0.0
+Cantonment,13300980,AirGradient,False,2025-06-11 13:00:00,2026-11-15 13:00:00,0.0
+Pak Arab,14152835,AirGradient,False,2025-09-19 05:00:00,2026-11-15 13:00:00,0.0
+Samanabad,13302769,AirGradient,False,2025-06-11 19:00:00,2026-11-15 13:00:00,0.0
+Forman Christian College & Chartered University,13341452,AirGradient,False,2025-06-16 15:00:00,2026-11-15 13:00:00,0.0
+Thokar Niaz Baig,13817570,AirGradient,False,2025-08-09 16:00:00,2026-11-15 13:00:00,0.0
+Test Device,14363855,AirGradient,False,2025-10-13 12:00:00,2025-10-14 15:00:00,0.0
+"ARC, Lahore",14599816,AirGradient,False,2025-11-10 17:00:00,2026-11-15 13:00:00,0.0
+Bedian Thethar Rd LHE,14671464,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+"B Block, Phase 5, DHA",14671468,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Pakistan Engineering Services (Pvt) Ltd.,14671470,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Yani Home,14671474,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Grand Charter School,14671476,Hawanama,False,2025-11-18 19:00:00,2026-08-05 14:00:00,0.0
+Askari 10,14671481,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Scarsdale International School,14671484,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Ghazi Road Interchange,14671488,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+FF Pakistan,14671491,Hawanama,False,2025-11-18 20:00:00,2026-03-05 04:00:00,0.0
+WWF-PAKISTAN,14671493,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Revenue Employees Coop Housing Society,14671494,Hawanama,False,2025-11-18 19:00:00,2026-11-15 11:00:00,0.0
+Model Town A LHE,14671495,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Gurumangat Rd B LHE,14671498,Hawanama,False,2025-11-18 19:00:00,2026-11-13 14:00:00,0.0
+Shadman Market B LHE,14671499,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Ferozepur Rd A LHE,14671501,Hawanama,False,2025-11-18 19:00:00,2026-11-03 12:00:00,0.0
+Honda Gateway,14671503,Hawanama,False,2025-11-18 19:00:00,2026-11-10 15:00:00,0.0
+LAS Lahore,14671504,Hawanama,False,2025-11-18 19:00:00,2026-11-15 11:00:00,0.0
+University of Central Punjab,14671505,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Trinity School Lahore,14671508,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Syed Maratib Ali Road,14671511,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Tufail Road near Rahat Bakery,14671515,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Powerzone head office,14671518,Hawanama,False,2025-11-18 19:00:00,2026-04-28 05:00:00,0.0
+Kickstart MM Alam,14671519,Hawanama,False,2025-11-18 19:00:00,2026-10-06 23:00:00,0.0
+HC - Askari 10,14671523,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Diamond Paint industries PVT LTD.,14671524,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+NPPMCL,14671525,Hawanama,False,2025-11-18 19:00:00,2026-10-15 07:00:00,0.0
+Hiking & Mountaineering Club GCU Lahore,14671526,Hawanama,False,2025-11-18 19:00:00,2026-11-15 11:00:00,0.0
+The University of Lahore,14671528,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+W.R,14671531,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+VTS,14671532,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Allama Iqbal Town B LHE,14671535,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+CERP Office,14671539,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Phase8-DHA,14671541,Hawanama,False,2025-11-18 19:00:00,2026-08-08 10:00:00,0.0
+FF Pakistan - 1,14671543,Hawanama,False,2025-11-18 19:00:00,2026-08-26 07:00:00,0.0
+Burki Rd B LHE,14671545,Hawanama,False,2025-11-18 19:00:00,2026-04-14 10:00:00,0.0
+Climate Finance Pakistan (PakAirQuality),14671548,Hawanama,False,2025-11-18 19:00:00,2025-12-09 13:00:00,0.0
+"Near Ada Plot, Raiwind Road",14671549,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Johar Town B LHE,14671552,Hawanama,False,2025-11-18 19:00:00,2026-11-15 12:00:00,0.0
+Model Town B LHE,14677802,Hawanama,False,2025-11-19 13:00:00,2026-11-14 15:00:00,0.0
+GENERATION Pvt ltd,14675087,Hawanama,False,2025-11-19 11:00:00,2026-11-15 12:00:00,0.0
+Valancia Town Lahore,14723649,Hawanama,False,2025-11-25 18:00:00,2026-11-15 11:00:00,0.0
+"The Bank of Punjab, Head Office, BOP Tower, Gulberg III.",14686625,Hawanama,False,2025-11-20 17:00:00,2025-11-24 19:00:00,0.0
+"BAM,  Civil Secretariat",14686628,Hawanama,False,2025-11-20 17:00:00,2025-12-23 13:00:00,0.0
+"AC OFFICE NISHTAR, GAJUMATA",14686630,Hawanama,False,2025-11-20 17:00:00,2025-11-24 00:00:00,0.0
+Samanabad,14686631,Hawanama,False,2025-11-20 17:00:00,2026-11-15 11:00:00,0.0
+SOS Johar Town LHR,14806380,Hawanama,False,2025-12-05 13:00:00,2025-12-10 17:00:00,0.0
+"Model Town, CD Ground",14686635,Hawanama,False,2025-11-20 17:00:00,2026-11-15 09:00:00,0.0
+"Abdullah Khokhar, House Johar Town",14686639,Hawanama,False,2025-11-20 17:00:00,2025-12-25 09:00:00,0.0
+University of Management and Technology,14828965,Hawanama,False,2025-12-08 04:00:00,2026-11-15 12:00:00,0.0
+Bahria Town ,15420347,AirGradient,False,2026-02-11 22:00:00,2026-11-15 13:00:00,0.0
+Upper Mall Road LHR,16034745,Hawanama,False,2026-04-23 11:00:00,2026-05-06 10:00:00,0.0
+Burki Rd Paragon B LHE,16034748,Hawanama,False,2026-04-23 10:00:00,2026-11-15 12:00:00,0.0
+DHA Phase 6 B LHE,16034749,Hawanama,False,2026-04-23 12:00:00,2026-11-03 17:00:00,0.0
+Model Town Link Rd B LHE,16034758,Hawanama,False,2026-04-23 11:00:00,2026-11-15 11:00:00,0.0
+Muslim Town LHE B,16034774,Hawanama,False,2026-04-23 10:00:00,2026-09-19 11:00:00,0.0
+Icchra Maqbool Rd LHE,16242910,Hawanama,False,2026-05-13 04:00:00,2026-11-15 12:00:00,0.0
+Bahria Town B LHE,16242912,Hawanama,False,2026-05-13 04:00:00,2026-11-14 10:00:00,0.0
+Tajpura,16242914,Hawanama,False,2026-05-13 04:00:00,2026-10-26 18:00:00,0.0
+Rehmanpura ,17125528,AirGradient,False,2026-08-03 11:00:00,2026-08-03 14:00:00,0.0
+DHA Phase 8 Lahore,17401736,AirGradient,False,2026-08-27 16:00:00,2026-10-01 13:00:00,0.0
+"Sina NGO,  Machar Colony",17766073,AirGradient,False,2026-09-26 13:00:00,2026-09-26 14:00:00,0.0
+QIE EMERGENCY SERVICE CENTER,17767545,AirGradient,False,2026-10-20 16:00:00,2026-11-15 12:00:00,0.0
+QIE Indus Plus Pvt. Ltd.,17767597,AirGradient,False,2026-10-21 17:00:00,2026-11-14 21:00:00,0.0
+service 1,17767891,AirGradient,False,2026-10-26 15:00:00,2026-10-26 15:00:00,0.0
+welkin,17767901,AirGradient,False,2026-10-26 16:00:00,2026-10-26 16:00:00,0.0
+d83bda1b7edc,17767906,AirGradient,False,2026-10-26 16:00:00,2026-10-26 16:00:00,0.0
+welkinhitech.com ,17767911,AirGradient,False,2026-10-26 17:00:00,2026-10-26 17:00:00,0.0
+Test Location 1,17766876,AirGradient,False,,,

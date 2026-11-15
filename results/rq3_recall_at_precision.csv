@@ -1,0 +1,61 @@
+event,h,model,precision_at_least,recall
+Hazardous (>225.5),24,Persistence,0.8,0.779
+Hazardous (>225.5),24,Persistence,0.9,0.397
+Hazardous (>225.5),24,Persistence,0.95,0.107
+Hazardous (>225.5),24,Raw CAMS,0.8,0.751
+Hazardous (>225.5),24,Raw CAMS,0.9,0.505
+Hazardous (>225.5),24,Raw CAMS,0.95,0.107
+Hazardous (>225.5),24,LightGBM plain,0.8,0.701
+Hazardous (>225.5),24,LightGBM plain,0.9,0.512
+Hazardous (>225.5),24,LightGBM plain,0.95,0.209
+Hazardous (>225.5),24,LightGBM class weights,0.8,0.707
+Hazardous (>225.5),24,LightGBM class weights,0.9,0.547
+Hazardous (>225.5),24,LightGBM class weights,0.95,0.284
+Hazardous (>225.5),24,LightGBM SMOTE,0.8,0.718
+Hazardous (>225.5),24,LightGBM SMOTE,0.9,0.488
+Hazardous (>225.5),24,LightGBM SMOTE,0.95,0.204
+Very Unhealthy (>125.5),24,Persistence,0.8,0.992
+Very Unhealthy (>125.5),24,Persistence,0.9,0.959
+Very Unhealthy (>125.5),24,Persistence,0.95,0.872
+Very Unhealthy (>125.5),24,Raw CAMS,0.8,0.839
+Very Unhealthy (>125.5),24,Raw CAMS,0.9,0.759
+Very Unhealthy (>125.5),24,Raw CAMS,0.95,0.691
+Very Unhealthy (>125.5),24,LightGBM plain,0.8,0.994
+Very Unhealthy (>125.5),24,LightGBM plain,0.9,0.905
+Very Unhealthy (>125.5),24,LightGBM plain,0.95,0.79
+Very Unhealthy (>125.5),24,LightGBM class weights,0.8,0.993
+Very Unhealthy (>125.5),24,LightGBM class weights,0.9,0.891
+Very Unhealthy (>125.5),24,LightGBM class weights,0.95,0.791
+Very Unhealthy (>125.5),24,LightGBM SMOTE,0.8,0.995
+Very Unhealthy (>125.5),24,LightGBM SMOTE,0.9,0.924
+Very Unhealthy (>125.5),24,LightGBM SMOTE,0.95,0.838
+Very Unhealthy (>125.5),48,Persistence,0.8,0.976
+Very Unhealthy (>125.5),48,Persistence,0.9,0.908
+Very Unhealthy (>125.5),48,Persistence,0.95,0.735
+Very Unhealthy (>125.5),48,Raw CAMS,0.8,0.84
+Very Unhealthy (>125.5),48,Raw CAMS,0.9,0.76
+Very Unhealthy (>125.5),48,Raw CAMS,0.95,0.691
+Very Unhealthy (>125.5),48,LightGBM plain,0.8,0.987
+Very Unhealthy (>125.5),48,LightGBM plain,0.9,0.886
+Very Unhealthy (>125.5),48,LightGBM plain,0.95,0.762
+Very Unhealthy (>125.5),48,LightGBM class weights,0.8,0.982
+Very Unhealthy (>125.5),48,LightGBM class weights,0.9,0.879
+Very Unhealthy (>125.5),48,LightGBM class weights,0.95,0.762
+Very Unhealthy (>125.5),48,LightGBM SMOTE,0.8,0.987
+Very Unhealthy (>125.5),48,LightGBM SMOTE,0.9,0.918
+Very Unhealthy (>125.5),48,LightGBM SMOTE,0.95,0.776
+Very Unhealthy (>125.5),72,Persistence,0.8,0.966
+Very Unhealthy (>125.5),72,Persistence,0.9,0.86
+Very Unhealthy (>125.5),72,Persistence,0.95,0.713
+Very Unhealthy (>125.5),72,Raw CAMS,0.8,0.842
+Very Unhealthy (>125.5),72,Raw CAMS,0.9,0.761
+Very Unhealthy (>125.5),72,Raw CAMS,0.95,0.693
+Very Unhealthy (>125.5),72,LightGBM plain,0.8,0.994
+Very Unhealthy (>125.5),72,LightGBM plain,0.9,0.92
+Very Unhealthy (>125.5),72,LightGBM plain,0.95,0.824
+Very Unhealthy (>125.5),72,LightGBM class weights,0.8,0.994
+Very Unhealthy (>125.5),72,LightGBM class weights,0.9,0.911
+Very Unhealthy (>125.5),72,LightGBM class weights,0.95,0.814
+Very Unhealthy (>125.5),72,LightGBM SMOTE,0.8,0.994
+Very Unhealthy (>125.5),72,LightGBM SMOTE,0.9,0.921
+Very Unhealthy (>125.5),72,LightGBM SMOTE,0.95,0.821

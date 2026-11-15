@@ -1,0 +1,21 @@
+event,h,model,test_months,false_alarm_days_per_month,false_alarm_episodes_per_month,false_alarm_hours_per_month
+Hazardous (>225.5),24,Persistence,17,1.0,3.18,37.24
+Hazardous (>225.5),24,Raw CAMS,17,0.0,0.0,0.0
+Hazardous (>225.5),24,LightGBM plain,17,3.0,4.59,91.59
+Hazardous (>225.5),24,LightGBM class weights,17,2.94,4.88,89.59
+Hazardous (>225.5),24,LightGBM SMOTE,17,3.06,4.59,92.0
+Very Unhealthy (>125.5),24,Persistence,17,0.59,1.53,23.0
+Very Unhealthy (>125.5),24,Raw CAMS,17,0.0,0.0,0.0
+Very Unhealthy (>125.5),24,LightGBM plain,17,2.18,3.71,57.65
+Very Unhealthy (>125.5),24,LightGBM class weights,17,2.24,4.18,57.0
+Very Unhealthy (>125.5),24,LightGBM SMOTE,17,2.18,4.29,52.76
+Very Unhealthy (>125.5),48,Persistence,17,1.06,1.53,29.06
+Very Unhealthy (>125.5),48,Raw CAMS,17,0.0,0.0,0.0
+Very Unhealthy (>125.5),48,LightGBM plain,17,2.53,5.29,55.24
+Very Unhealthy (>125.5),48,LightGBM class weights,17,2.29,4.53,51.35
+Very Unhealthy (>125.5),48,LightGBM SMOTE,17,2.18,4.65,48.94
+Very Unhealthy (>125.5),72,Persistence,17,1.18,1.59,32.06
+Very Unhealthy (>125.5),72,Raw CAMS,17,0.0,0.0,0.0
+Very Unhealthy (>125.5),72,LightGBM plain,17,2.59,5.12,56.35
+Very Unhealthy (>125.5),72,LightGBM class weights,17,2.65,5.82,57.65
+Very Unhealthy (>125.5),72,LightGBM SMOTE,17,3.71,7.47,60.41
