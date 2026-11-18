@@ -1,0 +1,19 @@
+{
+  "chosen": {
+    "ridge": {
+      "alpha": 0.0,
+      "season": 1.0
+    },
+    "lgbm": {
+      "alpha": 0.0,
+      "season": 1.0
+    },
+    "quantile": {
+      "q": 0.6
+    }
+  },
+  "strong": {
+    "alpha": 1.0,
+    "season": 2.0
+  }
+}

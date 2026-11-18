@@ -1,0 +1,16 @@
+h,new,vs,DM_stat,p_value
+24,Ridge + CAMS (weighted),Ridge + CAMS,0.0,1.0
+24,"Ridge + CAMS (weighted, strong)",Ridge + CAMS,14.3561,0.0
+24,LightGBM + CAMS (weighted),LightGBM + CAMS,0.0,1.0
+24,"LightGBM + CAMS (weighted, strong)",LightGBM + CAMS,3.7733,0.0002
+24,LightGBM + CAMS (quantile loss),LightGBM + CAMS,-1.9263,0.0541
+48,Ridge + CAMS (weighted),Ridge + CAMS,0.0,1.0
+48,"Ridge + CAMS (weighted, strong)",Ridge + CAMS,10.0466,0.0
+48,LightGBM + CAMS (weighted),LightGBM + CAMS,0.0,1.0
+48,"LightGBM + CAMS (weighted, strong)",LightGBM + CAMS,0.3135,0.7539
+48,LightGBM + CAMS (quantile loss),LightGBM + CAMS,-3.01,0.0026
+72,Ridge + CAMS (weighted),Ridge + CAMS,0.0,1.0
+72,"Ridge + CAMS (weighted, strong)",Ridge + CAMS,7.4986,0.0
+72,LightGBM + CAMS (weighted),LightGBM + CAMS,0.0,1.0
+72,"LightGBM + CAMS (weighted, strong)",LightGBM + CAMS,0.9998,0.3174
+72,LightGBM + CAMS (quantile loss),LightGBM + CAMS,-2.8573,0.0043

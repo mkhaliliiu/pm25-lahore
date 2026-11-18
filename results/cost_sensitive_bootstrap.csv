@@ -1,0 +1,16 @@
+h,new,vs,hours,MAE_diff_high_hours,ci95_low,ci95_high
+24,Ridge + CAMS (weighted),Ridge + CAMS,4944,0.0,0.0,0.0
+24,"Ridge + CAMS (weighted, strong)",Ridge + CAMS,4944,8.538,5.708,11.317
+24,LightGBM + CAMS (weighted),LightGBM + CAMS,4944,-0.0,-0.0,0.0
+24,"LightGBM + CAMS (weighted, strong)",LightGBM + CAMS,4944,-2.276,-3.991,-0.565
+24,LightGBM + CAMS (quantile loss),LightGBM + CAMS,4944,-0.108,-1.932,1.847
+48,Ridge + CAMS (weighted),Ridge + CAMS,4927,0.0,-0.0,0.0
+48,"Ridge + CAMS (weighted, strong)",Ridge + CAMS,4927,6.378,3.237,9.356
+48,LightGBM + CAMS (weighted),LightGBM + CAMS,4927,0.0,-0.0,0.0
+48,"LightGBM + CAMS (weighted, strong)",LightGBM + CAMS,4927,-5.344,-7.155,-3.517
+48,LightGBM + CAMS (quantile loss),LightGBM + CAMS,4927,-2.257,-3.738,-0.803
+72,Ridge + CAMS (weighted),Ridge + CAMS,4928,0.0,-0.0,0.0
+72,"Ridge + CAMS (weighted, strong)",Ridge + CAMS,4928,3.794,0.499,6.93
+72,LightGBM + CAMS (weighted),LightGBM + CAMS,4928,-0.0,-0.0,-0.0
+72,"LightGBM + CAMS (weighted, strong)",LightGBM + CAMS,4928,-4.217,-5.885,-2.628
+72,LightGBM + CAMS (quantile loss),LightGBM + CAMS,4928,-1.255,-2.698,0.114
